@@ -19,14 +19,14 @@ if ( ! $PSISE ){
 
 $Date = get-date -format "yyyy-MM-dd"
 
-$script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
+$script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipbaords\Clipboard-$Date.txt"
 $Script:Textfile = "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
 $script:BaseClipboard =  $script:BaseClipboardcheck
 $Script:Time = Get-Date -format "HH:mm"
 
 
 if (!$Testfile) {
-    New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\" -Force -Name "Clipboard-$Date.txt"
+    New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\Clipbaords" -Force -Name "Clipboard-$Date.txt"
 }
 
 # Loading external assemblies
@@ -77,7 +77,7 @@ $OutputRichTextBox.Location = New-Object System.Drawing.Point(12, 57)
 $OutputRichTextBox.Name = "OutputRichTextBox"
 $OutputRichTextBox.Size = New-Object System.Drawing.Size(314, 488)
 $OutputRichTextBox.TabIndex = 0
-$OutputRichTextBox.Text = "A .txt file on your desktop called $($Date).txt .`r `nClick 'Start Check' to start monitoring your clipboard."
+$OutputRichTextBox.Text = "A .txt file on your desktop called \Clipbaords\$($Date).txt .`r `nClick 'Start Check' to start monitoring your clipboard."
 
 # StartClipboard
 
