@@ -5,49 +5,63 @@
 ################################################################################
 
 # Setting up files
-$Date = get-date -format "yyyy-MM"
+
+if ( ! $PSISE ){
+    # Hide this window if not ran using PS ISE
+    $t = '[DllImport("user32.dll")] public static extern bool ShowWindow(int handle, int state);'
+    add-type -name win -member $t -namespace native
+	[native.win]::ShowWindow(([System.Diagnostics.Process]::GetCurrentProcess() | Get-Process).MainWindowHandle, 0)
+	
+}
+
+
+
+
+$Date = get-date -format "yyyy-MM-dd"
 
 $script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
 $Script:Textfile = "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
-$script:Clipboard = ""
+$script:BaseClipboard =  $script:BaseClipboardcheck
+$Script:Time = Get-Date -format "HH:mm"
 
-if (!$Testfile){
-	New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\" -Force -Name "Clipboard-$Date.txt"
+
+if (!$Testfile) {
+    New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\" -Force -Name "Clipboard-$Date.txt"
 }
 
 # Loading external assemblies
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
+
+
 # Functions
 function Save_Box {
-	[System.String]$OutputRichTextBox.Text  | Out-File -FilePath $script:Textfile -Append
+	$Script:Time + "`r`n" + $script:BaseClipboard + "`r`n" | Out-File -FilePath $script:Textfile -Append
 }
 
-function Loop_Check {
-	while($true){
-#$KeyPress = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-$KeyPress = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-if (($Keypress.VirtualKeyCode -eq '67')){
-	Clipboard_Check}
-	}
-}
 
-function Clipboard_Check {
-if ( $script:Clipboard -ne $script:Clipboardcheck ){ Clipboard_Output }
+function Timer_Tick {
+    $script:BaseClipboardcheck = ("$( Get-Clipboard -Raw )").ToString()
+    if ( $script:BaseClipboard -ne $script:BaseClipboardcheck ) { 
+		Clipboard_Output 
+		Save_Box
+    }
 }
-
 
 function Clipboard_Output {
-		 $script:Clipboard  =  $script:Clipboardcheck
-		 $OutputRichTextBox.Text += $script:Clipboard
-		 $OutputRichTextBox.Text += "`r" + "`n"
-		 $OutputRichTextBox.Text += "-------------"
-		 $OutputRichTextBox.Text += "`r" + "`n"	
-		 $script:Clipboardcheck = ("$( Get-Clipboard -Raw )").ToString()
-
+    $script:BaseClipboard = $script:BaseClipboardcheck
+	$OutputRichTextBox.Text +=  "---------------------------------------" 
+	$OutputRichTextBox.Text += "`r`n"
+	$OutputRichTextBox.Text += "$($Script:Time)" + "`r`n"
+	$OutputRichTextBox.Text += "`r`n"	
+	$OutputRichTextBox.Text += $script:BaseClipboard
+	$OutputRichTextBox.Text += "`r`n"	
+	$script:BaseClipboard = ("$( Get-Clipboard -Raw )").ToString()
 }
 
+#region Form
 # Clipboardtotext
 
 $Clipboardtotext = New-Object System.Windows.Forms.Form
@@ -63,18 +77,27 @@ $OutputRichTextBox.Location = New-Object System.Drawing.Point(12, 57)
 $OutputRichTextBox.Name = "OutputRichTextBox"
 $OutputRichTextBox.Size = New-Object System.Drawing.Size(314, 488)
 $OutputRichTextBox.TabIndex = 0
-$OutputRichTextBox.Text = ""
+$OutputRichTextBox.Text = "A .txt file on your desktop called $($Date).txt .`r `nClick 'Start Check' to start monitoring your clipboard."
 
-# SaveAs
+# StartClipboard
 
-$SaveAs = New-Object System.Windows.Forms.Button
-$SaveAs.Location = New-Object System.Drawing.Point(12, 12)
-$SaveAs.Name = "SaveAs"
-$SaveAs.Size = New-Object System.Drawing.Size(123, 39)
-$SaveAs.TabIndex = 1
-$SaveAs.Text = "Save As"
-$SaveAs.UseVisualStyleBackColor = $true
-$SaveAs.ADD_Click({ Save_Box })
+$StartClipboard = New-Object System.Windows.Forms.Button
+$StartClipboard.Location = New-Object System.Drawing.Point(12, 12)
+$StartClipboard.Name = "StartClipboard"
+$StartClipboard.Size = New-Object System.Drawing.Size(123, 39)
+$StartClipboard.TabIndex = 1
+$StartClipboard.Text = "Start Check"
+$StartClipboard.UseVisualStyleBackColor = $true
+$StartClipboard.ADD_Click( {
+
+	$OutputRichTextBox.Text = ""
+	$StartClipboard.Enabled = $false	
+	Timer_Start  
+})
+
+
+$ToolTip = New-Object System.Windows.Forms.ToolTip
+$ToolTip.SetToolTip( $StartClipboard , "Click to start monitoring your clipboard.")
 
 # ExitButton
 
@@ -86,17 +109,26 @@ $ExitButton.Size = New-Object System.Drawing.Size(123, 39)
 $ExitButton.TabIndex = 1
 $ExitButton.Text = "Save and Exit"
 $ExitButton.UseVisualStyleBackColor = $true
-
-
-$Clipboardtotext.Controls.AddRange(@($OutputRichTextBox,$SaveAs,$ExitButton))
-
-function OnFormClosing_Clipboardtotext{ 
-Save_Box
-$Clipboardtotext.Dispose()
+$ExitButton.ADD_Click( { OnFormClosing_Clipboardtotext })
+$ToolTip.SetToolTip($ExitButton , "Save to txt and close.")
+function Timer_Start {
+	$timer = New-Object System.Windows.Forms.Timer
+	$timer.Interval = 1000     # fire every 2s
+	$timer.add_tick( { Timer_Tick })
+	$timer.start()
 }
 
-#$Clipboardtotext.Add_Shown({$Clipboardtotext.Activate()})
+
+$Clipboardtotext.Controls.AddRange(@($OutputRichTextBox, $StartClipboard, $ExitButton))
+
+#endregion
+
+
+function OnFormClosing_Clipboardtotext { 
+    Save_Box
+    $Clipboardtotext.Dispose()
+}
 
 $Clipboardtotext.ShowDialog()
 
-$Clipboardtotext.Add_FormClosing( { OnFormClosing_Clipboardtotext} )
+
