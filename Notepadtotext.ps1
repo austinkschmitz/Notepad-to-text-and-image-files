@@ -6,11 +6,11 @@
 
 # Setting up files
 
-if ( ! $PSISE ){
+if ( ! $PSISE ) {
     # Hide this window if not ran using PS ISE
     $t = '[DllImport("user32.dll")] public static extern bool ShowWindow(int handle, int state);'
     add-type -name win -member $t -namespace native
-	[native.win]::ShowWindow(([System.Diagnostics.Process]::GetCurrentProcess() | Get-Process).MainWindowHandle, 0)
+    [native.win]::ShowWindow(([System.Diagnostics.Process]::GetCurrentProcess() | Get-Process).MainWindowHandle, 0)
 	
 }
 
@@ -21,8 +21,13 @@ $Date = get-date -format "yyyy-MM-dd"
 
 $script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipbaords\Clipboard-$Date.txt"
 $Script:Textfile = "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
-$script:BaseClipboard =  $script:BaseClipboardcheck
+$script:BaseClipboard = $script:BaseClipboardcheck
 $Script:Time = Get-Date -format "HH:mm"
+#Images
+
+$Script:ImageFoldertest = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipbaords\Images"
+$Script:ImageFolder = "$($env:USERPROFILE)\Desktop\Clipbaords\Images"
+
 
 
 if (!$Testfile) {
@@ -38,28 +43,61 @@ Add-Type -AssemblyName System.Drawing
 
 # Functions
 function Save_Box {
-	$Script:Time + "`r`n" + $script:BaseClipboard + "`r`n" | Out-File -FilePath $script:Textfile -Append
+    $Script:Time + "`r`n" + $script:BaseClipboard + "`r`n" | Out-File -FilePath $script:Textfile -Append
 }
 
-
 function Timer_Tick {
-    $script:BaseClipboardcheck = ("$( Get-Clipboard -Raw )").ToString()
-    if ( $script:BaseClipboard -ne $script:BaseClipboardcheck ) { 
-		Clipboard_Output 
-		Save_Box
+    
+            $script:BaseClipboardcheck  = [System.Windows.Forms.Clipboard]::GetDataObject()
+    if ($script:BaseClipboardcheck.ContainsImage()) {
+        Save_Image -Isimage $script:BaseClipboardcheck
+        Set-Clipboard -Value $script:BaseClipboard
+    }
+   
+    else {
+        $script:BaseClipboardcheck = ("$( Get-Clipboard -Raw )").ToString()
+        if ( $script:BaseClipboard -ne $script:BaseClipboardcheck ) { 
+            Clipboard_Output 
+            Save_Box
+        }
     }
 }
 
 function Clipboard_Output {
     $script:BaseClipboard = $script:BaseClipboardcheck
-	$OutputRichTextBox.Text +=  "---------------------------------------" 
-	$OutputRichTextBox.Text += "`r`n"
-	$OutputRichTextBox.Text += "$($Script:Time)" + "`r`n"
-	$OutputRichTextBox.Text += "`r`n"	
-	$OutputRichTextBox.Text += $script:BaseClipboard
-	$OutputRichTextBox.Text += "`r`n"	
-	$script:BaseClipboard = ("$( Get-Clipboard -Raw )").ToString()
+    $OutputRichTextBox.Text += "---------------------------------------" 
+    $OutputRichTextBox.Text += "`r`n"
+    $OutputRichTextBox.Text += "$($Script:Time)" + "`r`n"
+    $OutputRichTextBox.Text += "`r`n"	
+    $OutputRichTextBox.Text += $script:BaseClipboard
+    $OutputRichTextBox.Text += "`r`n"	
+    $script:BaseClipboard = ("$( Get-Clipboard -Raw )").ToString()
 }
+
+function Save_Image {
+    param (
+        $Isimage
+    )	
+    if (!$Script:ImageFoldertest) {
+        New-Item  -ItemType Directory -Path "$($env:USERPROFILE)\Desktop\Clipbaords" -Force -Name "Images"
+    }
+    $Script:Imgtime = "$((Get-Date).Hour)" + "$((Get-Date).Minute)" + "$((Get-Date).Second)"
+    $filename = "$Script:ImageFolder\$Script:Imgtime.png"
+    [System.Drawing.Bitmap]$Isimage.getimage().Save($filename, [System.Drawing.Imaging.ImageFormat]::Png)
+		
+    $OutputRichTextBox.Text += "---------------------------------------" 
+    $OutputRichTextBox.Text += "`r`n"
+    $OutputRichTextBox.Text += "$($Script:Time)" + "`r`n"
+    $OutputRichTextBox.Text += "`r`n"	
+    $OutputRichTextBox.Text += "Saved Image to $filename"
+    $OutputRichTextBox.Text += "`r`n"	
+	Return  
+}
+
+
+
+
+
 
 #region Form
 # Clipboardtotext
@@ -90,10 +128,10 @@ $StartClipboard.Text = "Start Check"
 $StartClipboard.UseVisualStyleBackColor = $true
 $StartClipboard.ADD_Click( {
 
-	$OutputRichTextBox.Text = ""
-	$StartClipboard.Enabled = $false	
-	Timer_Start  
-})
+        $OutputRichTextBox.Text = ""
+        $StartClipboard.Enabled = $false	
+        Timer_Start  
+    })
 
 
 $ToolTip = New-Object System.Windows.Forms.ToolTip
@@ -112,10 +150,10 @@ $ExitButton.UseVisualStyleBackColor = $true
 $ExitButton.ADD_Click( { OnFormClosing_Clipboardtotext })
 $ToolTip.SetToolTip($ExitButton , "Save to txt and close.")
 function Timer_Start {
-	$timer = New-Object System.Windows.Forms.Timer
-	$timer.Interval = 1000     # fire every 2s
-	$timer.add_tick( { Timer_Tick })
-	$timer.start()
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 1000     # fire every 2s
+    $timer.add_tick( { Timer_Tick })
+    $timer.start()
 }
 
 
