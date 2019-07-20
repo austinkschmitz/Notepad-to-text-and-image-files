@@ -19,19 +19,19 @@ if ( ! $PSISE ) {
 
 $Date = get-date -format "yyyy-MM-dd"
 
-$script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipbaords\Clipboard-$Date.txt"
+$script:Testfile = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipboards\Clipboard-$Date.txt"
 $Script:Textfile = "$($env:USERPROFILE)\Desktop\Clipboard-$Date.txt"
 $script:BaseClipboard = $script:BaseClipboardcheck
 $Script:Time = Get-Date -format "HH:mm"
 #Images
 
-$Script:ImageFoldertest = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipbaords\Images"
-$Script:ImageFolder = "$($env:USERPROFILE)\Desktop\Clipbaords\Images"
+$Script:ImageFoldertest = Test-Path -Path "$($env:USERPROFILE)\Desktop\Clipboards\Images"
+$Script:ImageFolder = "$($env:USERPROFILE)\Desktop\Clipboards\Images"
 
 
 
 if (!$Testfile) {
-    New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\Clipbaords" -Force -Name "Clipboard-$Date.txt"
+    New-Item  -ItemType File -Path "$($env:USERPROFILE)\Desktop\Clipboards" -Force -Name "Clipboard-$Date.txt"
 }
 
 # Loading external assemblies
@@ -79,7 +79,7 @@ function Save_Image {
         $Isimage
     )	
     if (!$Script:ImageFoldertest) {
-        New-Item  -ItemType Directory -Path "$($env:USERPROFILE)\Desktop\Clipbaords" -Force -Name "Images"
+        New-Item  -ItemType Directory -Path "$($env:USERPROFILE)\Desktop\Clipboards" -Force -Name "Images"
     }
     $Script:Imgtime = "$((Get-Date).Hour)" + "$((Get-Date).Minute)" + "$((Get-Date).Second)"
     $filename = "$Script:ImageFolder\$Script:Imgtime.png"
@@ -115,7 +115,7 @@ $OutputRichTextBox.Location = New-Object System.Drawing.Point(12, 57)
 $OutputRichTextBox.Name = "OutputRichTextBox"
 $OutputRichTextBox.Size = New-Object System.Drawing.Size(314, 488)
 $OutputRichTextBox.TabIndex = 0
-$OutputRichTextBox.Text = "A .txt file on your desktop called \Clipbaords\$($Date).txt .`r `nClick 'Start Check' to start monitoring your clipboard."
+$OutputRichTextBox.Text = "A .txt file on your desktop called \Clipboards\$($Date).txt .`r `nClick 'Start Check' to start monitoring your clipboard."
 
 # StartClipboard
 
