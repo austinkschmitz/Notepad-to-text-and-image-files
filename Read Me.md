@@ -1,6 +1,6 @@
 # Powershell Copy Clipboard to Text
 
-This Powershell window is designed with Windows Forms and Powershell version 5.1+
+This Powershell window is designed with Windows Forms and Powershell version 5.1+.
 
 ## Description
 While the form is running it will monitor your clip-board and send it to a text file. If you copy a picture it will send the picture to a new directory within the clipboard directory.
@@ -16,7 +16,7 @@ Copy the .ps1 script to your common script directory for running. You can run in
 
 
 ### Support
-This is an open source project. Contact POC for a fatal flaw
+This is an open source project.
 
 
 ## License
